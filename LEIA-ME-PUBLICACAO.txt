@@ -1,0 +1,17 @@
+CARTAS DA POLÍTICA — EDIÇÃO DE TESTE COM 200 CARTAS
+
+200 cartas: 67 originais, 60 novas perguntas factuais sobre a Constituição e 73 novas propostas de opinião.
+As 60 cartas novas de conhecimento são baseadas em dispositivos constitucionais e trazem artigo e link oficial.
+As 73 propostas são questões opinativas, não citações nem atribuições a políticos.
+ATENÇÃO: a curadoria editorial das 67 cartas originais não foi refeita integralmente nesta edição.
+
+PUBLICAÇÃO:
+1. Publicar TODO O CONTEÚDO desta pasta na raiz do repositório GitHub vinculado ao Cloudflare Pages.
+2. Preservar functions/api/event.js na estrutura exata.
+3. No Cloudflare Pages > Settings > Bindings, associar D1 com nome de variável DB ao banco cartas-da-politica-estatisticas; implantar novamente após salvar.
+4. No console D1, executar schema.sql caso as tabelas ainda não existam.
+5. Testar https://cartas-da-politica-rtl.pages.dev/api/event : deve retornar JSON com ok:true e database:vinculado. Se mostrar o jogo, a função NÃO está sendo roteada corretamente.
+6. Iniciar jogo com consentimento e conferir SELECT COUNT(*) FROM partidas; e SELECT COUNT(*) FROM respostas; no D1.
+7. Sem consentimento, a partida funciona sem registro no banco.
+
+IMPORTANTE: as respostas enviadas ao D1 são autodeclaradas pelo cliente, sem garantia antifraude. O indicador ideológico é exploratório e não validado cientificamente.
