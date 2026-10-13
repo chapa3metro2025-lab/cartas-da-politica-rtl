@@ -1,0 +1,12 @@
+CARTAS DA POLÍTICA — ATUALIZAÇÃO METODOLÓGICA (200 CARTAS)
+
+1. IMPORTANTE: FAÇA BACKUP do repositório e do D1 antes de publicar.
+2. No Cloudflare D1, execute MIGRACAO-D1.sql UMA ÚNICA VEZ, ANTES de publicar o novo event.js. O schema.sql é apenas para criação inicial; NÃO apague tabelas.
+3. Publique index.html, privacidade.html, functions/api/event.js E functions/api/scoring.js mantendo os caminhos. GitHub branch main -> Cloudflare Pages automático.
+4. Verifique /api/event (GET), inicie partida com consentimento, responda ao menos 15 cartas de opinião diagnósticas distribuídas entre 3 dimensões, conclua e verifique pontuacao_politica, faixa_politica no D1.
+5. O jogo agora encerra a rodada ao chegar aos resultados e permite reabrir a MESMA partida ao continuar, preservando contagens.
+6. CONSULTAS-PAINEL.sql fornece percentuais por faixa no Console D1, SEM disponibilizar dados sensíveis por uma API pública. Não exponha tabelas/respostas brutas.
+7. A versão atual não implementa painel web autenticado: seria necessário configurar Cloudflare Access e verificar autenticação no servidor. As consultas SQL são o método administrativo seguro disponível agora.
+8. A régua não usa acertos/erros; exige 10 opiniões diagnósticas em 3 dimensões (mínimo 2 por dimensão), com médias de dimensão em vez de média de todas as cartas. NÃO é escala científica validada; o resultado é exploratório e pode ser inconclusivo.
+9. Sorteio favorece cartas factuais existentes sobre personagens/campos políticos identificados, mas NÃO foram inventadas novas citações ou atribuições factuais. As 200 cartas foram mantidas; 12 propostas de opinião genéricas foram reescritas e ênfase de seleção ajustada. Antes de ampla divulgação, realizar revisão editorial de fontes e validação da escala.
+10. Partidas anteriores não recebem classificação retroativa automática. Gráfico separa dados antigos e inconclusivos. Percentuais se referem a partidas, não indivíduos únicos.
