@@ -77,21 +77,53 @@ function choiceButtons(opts){return `<div class="options">${opts.map((o,i)=>`<bu
 function choose(i){selected=window.currentOptions[i];render()}
 
 let analyticsConsent=false, analyticsSession=null, analyticsQueue=Promise.resolve();
+let analyticsPending=0, analyticsFailed=0;
+const waitAnalytics=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function sendGameEvent(payload){
- if(!analyticsConsent||!analyticsSession)return;
+ if(!analyticsConsent||!analyticsSession)return analyticsQueue;
  const data={...payload,session:analyticsSession};
- analyticsQueue=analyticsQueue.catch(()=>{}).then(async()=>{
-  try {
-   const response=await fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),keepalive:true});
-   const body=await response.json().catch(()=>({}));
-   if(!response.ok||!body.ok){console.warn('Estatísticas não registradas:',response.status,body.error||'Resposta inválida');window.analyticsError=true;}
-  } catch(error){console.warn('Estatísticas indisponíveis:',error);window.analyticsError=true;}
- });
+ analyticsPending++;
+ const task=async()=>{
+  let lastError='';
+  for(let attempt=0;attempt<5;attempt++){
+   try{
+    const response=await fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),cache:'no-store'});
+    const body=await response.json().catch(()=>({}));
+    if(response.ok&&body.ok){analyticsPending--;return true;}
+    lastError=`HTTP ${response.status}: ${body.error||'Resposta inválida'}`;
+    if(response.status>=400&&response.status<500&&response.status!==429)break;
+   }catch(error){lastError=String(error)}
+   if(attempt<4)await waitAnalytics(Math.min(6000,500*(2**attempt)));
+  }
+  analyticsPending--;analyticsFailed++;window.analyticsError=true;
+  console.warn('Falha ao registrar estatística:',data.event,data.card||'',lastError);
+  return false;
+ };
+ analyticsQueue=analyticsQueue.then(task,task);
+ return analyticsQueue;
+}
+async function finalizeAnalytics(){
+ if(!analyticsConsent||!analyticsSession)return;
+ // Nunca concluir uma partida enquanto houver respostas não confirmadas.
+ await analyticsQueue;
+ if(analyticsFailed){
+  window.analyticsError=true;
+  showAnalyticsWarning('Algumas respostas não foram registradas. Confira sua conexão e reinicie a partida para um novo teste. Esta rodada não foi marcada como concluída no banco.');
+  return;
+ }
+ const ok=await sendGameEvent({event:'finish'});
+ if(!ok)showAnalyticsWarning('Não foi possível confirmar o encerramento da partida no banco.');
+ else showAnalyticsWarning('Todas as respostas foram confirmadas pelo servidor.');
+}
+function showAnalyticsWarning(message){
+ let el=document.getElementById('analyticsStatus');
+ if(!el){el=document.createElement('p');el.id='analyticsStatus';el.className='note';document.getElementById('app')?.prepend(el)}
+ if(el)el.textContent=message;
 }
 
-function start(){window.analyticsError=false;analyticsConsent=Boolean(document.getElementById("statsConsent")?.checked);analyticsSession=analyticsConsent&&crypto.randomUUID?crypto.randomUUID():null;let count=Number(document.getElementById('initial').value);limit=count;deck=stratifiedDeck(count);idx=0;stage='card';selected=null;stance=null;records=[];sendGameEvent({event:'start',count});render()}
+function start(){analyticsPending=0;analyticsFailed=0;analyticsQueue=Promise.resolve();window.analyticsError=false;analyticsConsent=Boolean(document.getElementById("statsConsent")?.checked);analyticsSession=analyticsConsent&&crypto.randomUUID?crypto.randomUUID():null;let count=Number(document.getElementById('initial').value);limit=count;deck=stratifiedDeck(count);idx=0;stage='card';selected=null;stance=null;records=[];sendGameEvent({event:'start',count});render()}
 function more(){sendGameEvent({event:'resume'});const e=document.getElementById('extra');if(e)step=Number(e.value);extraDeckOrder();limit=Math.min(deck.length,limit+step);stage='card';render()}
-function next(){idx++;selected=null;stance=null;stage=idx>=limit||idx>=deck.length?'results':'card';if(stage==='results')sendGameEvent({event:'finish'});render()}
+function next(){idx++;selected=null;stance=null;stage=idx>=limit||idx>=deck.length?'results':'card';if(stage==='results'){render();showAnalyticsWarning('Confirmando respostas no servidor…');finalizeAnalytics();}else render()}
 function answer(){let c=deck[idx];if(selected===null)return;if(stage==='opinion'){stance=selected;selected=null;stage=c.kind==='issue'?'issueReveal':'knowledge';if(c.kind==='issue'){records.push({id:c.id,topic:c.topic,kind:c.kind,axis:c.axis,opinion:stance});sendGameEvent({event:'answer',card:c.id,topic:c.topic,kind:c.kind,opinion:stance});} }else if(stage==='knowledge'){records.push({id:c.id,topic:c.topic,kind:c.kind,opinion:stance,answer:selected,correct:selected===c.answer});sendGameEvent({event:'answer',card:c.id,topic:c.topic,kind:c.kind,opinion:stance,answer:selected,correct:selected===c.answer});stage='reveal'}render()}
 function cardHeader(c){return `<div class="top"><span class="pill">${escapeHTML(c.topic)}</span><span class="small">Carta ${idx+1} de ${limit}</span></div><div class="progress"><span style="width:${Math.round(idx/limit*100)}%"></span></div>`}
 function render(){if(stage==='start'){app.innerHTML=`<div class="tag">Nova partida</div><h2>Descubra os fatos. Registre suas opiniões.</h2><p class="muted">Sorteio aleatório com cotas entre sete temas. Cada carta aparece uma única vez por partida. Perguntas factuais e opiniões são avaliadas separadamente.</p><label for="initial">Quantidade inicial de cartas</label><select id="initial"><option value="15">15 cartas</option><option value="20">20 cartas</option><option value="25">25 cartas</option><option value="30" selected>30 cartas</option><option value="40">40 cartas</option></select><label class="small" style="display:flex;gap:10px;align-items:flex-start;margin:16px 0"><input type="checkbox" id="statsConsent" style="width:20px;height:20px;flex:none;margin-top:3px"/><span><b>Participar das estatísticas anônimas de respostas (opcional)</b><br>Se marcar, esta partida enviará respostas, opiniões e acertos para estatísticas coletivas, vinculados somente a um código aleatório da partida. Sem marcar, você joga normalmente e suas respostas não são enviadas ao banco. <a href="/privacidade.html" target="_blank">Saiba mais</a>.</span></label>${btn('Começar partida','start()')}<p class="small">Banco com ${DATA.length} cartas (inclui questões sobre direitos constitucionais e propostas para debate). O sorteio busca equilibrar sete temas, mas a cobertura depende das cartas disponíveis. Após concluir, é possível continuar com cartas inéditas.</p><p class="small">Identidade visual: Oposição RTL. Fontes e contexto disponíveis nas cartas factuais.</p>`;return}
@@ -102,7 +134,7 @@ if(stage==='knowledge'){window.currentOptions=shuffle(c.options);out+=`<div clas
 if(stage==='reveal'){let r=records.at(-1);out+=`<div class="tag">Revelação e contexto</div><p class="${r.correct?'correct':'wrong'} result">${r.correct?'Resposta correta!':'Resposta incorreta'}</p><p><b>Pergunta:</b> ${escapeHTML(c.question)}</p><p><b>Sua resposta:</b> ${escapeHTML(r.answer)}</p><p><b>Resposta correta:</b> ${escapeHTML(c.answer)}</p><div class="note">${escapeHTML(c.explain)}</div>`;if(c.roles&&Object.keys(c.roles).length){out+=`<p><b>Responsabilidades documentadas</b></p><div class="note">${Object.entries(c.roles).map(([k,v])=>`<div><b>${escapeHTML(k)}:</b> ${escapeHTML(v)}</div>`).join('')}</div>`}if(c.stance)out+=`<p class="small">Sua opinião anterior: ${escapeHTML(r.opinion)}. Ela não altera o acerto factual.</p>`;out+=`<a class="source" href="${escapeHTML(c.url)}" target="_blank" rel="noopener">Consultar fonte documental ↗</a>${btn('Próxima carta →','next()')}`}
 if(stage==='issueReveal'){out+=`<div class="tag">Opinião registrada</div><p class="lead">${escapeHTML(c.question)}</p><p>Sua posição: <b>${escapeHTML(stance)}</b></p><p class="muted">Não há resposta certa ou errada. Sua posição será apresentada por tema no resultado, sem presumir seu voto.</p>${btn('Próxima carta →','next()')}`}
 app.innerHTML=out}
-function restart(){if(analyticsConsent&&analyticsSession)sendGameEvent({event:'finish'});analyticsConsent=false;analyticsSession=null;stage='start';selected=null;stance=null;idx=0;records=[];render()}
+function restart(){analyticsConsent=false;analyticsSession=null;stage='start';selected=null;stance=null;idx=0;records=[];render()}
 const SPECTRUM_BANDS=['Extrema esquerda','Esquerda','Centro-esquerda','Centro','Centro-direita','Direita','Extrema direita'];
 const SPECTRUM_COLORS=['#991b1b','#dc2626','#f97316','#9ca3af','#60a5fa','#2563eb','#1e3a8a'];
 const DIMENSION_LABELS={economia:'Economia e propriedade',trabalho:'Relações de trabalho',costumes:'Costumes e valores',direitos:'Liberdades e segurança',instituicoes:'Instituições e participação'};

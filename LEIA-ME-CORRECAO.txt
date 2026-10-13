@@ -1,0 +1,9 @@
+CORREÇÃO DO REGISTRO DE RESPOSTAS
+
+Substitua somente index.html na raiz do GitHub.
+
+Alterações: tentativas de reenvio de eventos em caso de erro transitório; conclusão somente depois de confirmar todos os envios; alerta visível ao jogador em caso de falha; indicação de sucesso após confirmação.
+
+Não requer migração SQL nem alteração de event.js ou scoring.js.
+
+Limitação: não recupera as seis respostas ausentes da partida anterior; não garante registro caso a conexão fique indisponível.
