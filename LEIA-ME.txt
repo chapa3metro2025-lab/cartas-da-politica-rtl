@@ -1,0 +1,12 @@
+CARTAS DA POLÍTICA — PUBLICAÇÃO INICIAL (CONTATO ATUALIZADO)
+
+Contato editorial e de privacidade: chapa3metro2025@gmail.com
+
+1. Crie sua conta gratuita em https://dash.cloudflare.com/sign-up
+2. No painel, acesse Workers & Pages e crie um projeto Pages por envio direto.
+3. Envie os arquivos deste pacote (ZIP ou pasta, conforme a opção oferecida).
+4. Publique e teste o endereço fornecido pela Cloudflare no celular.
+5. Confira as páginas /termos.html e /privacidade.html.
+6. Ative Web Analytics separadamente se desejar métricas de visitas.
+7. Este pacote NÃO possui backend de estatísticas de partidas nem painel D1. Não afirme que coleta dados de respostas até a implementação e revisão da política de privacidade.
+8. Não é necessário domínio próprio ou GitHub.
