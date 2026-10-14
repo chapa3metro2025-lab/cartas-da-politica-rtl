@@ -45,17 +45,31 @@ function politicalDocumentPriority(c){
 }
 function weightedShuffle(cards){return cards.map(c=>({c,key:Math.pow(Math.random(),1/(1+politicalDocumentPriority(c)))})).sort((a,b)=>b.key-a.key).map(x=>x.c)}
 function stratifiedDeck(n){
- const buckets=Object.fromEntries(THEMES.map(t=>[t.id,weightedShuffle(DATA.filter(c=>themeOf(c)===t.id))]));
- const want=targets(n), chosen=[], counts=Object.fromEntries(THEMES.map(t=>[t.id,0]));
- for(const t of THEMES){let q=want[t.id];while(q-->0&&buckets[t.id].length){chosen.push(buckets[t.id].shift());counts[t.id]++}}
- // Fill gaps when a theme lacks enough cards, prioritizing underrepresented themes.
- while(chosen.length<Math.min(n,DATA.length)){
-   const possible=THEMES.filter(t=>buckets[t.id].length).sort((a,b)=>counts[a.id]/a.quota-counts[b.id]/b.quota||Math.random()-.5);
-   if(!possible.length)break;
-   const t=possible[0];chosen.push(buckets[t.id].shift());counts[t.id]++;
+ // Balance diagnostic opinions by political dimension before filling thematic quotas.
+ // For a 30-card round, reserve three diagnostic proposals per dimension (15 total).
+ // Smaller rounds reserve as many complete five-dimension cycles as their size allows.
+ const dims=['economia','trabalho','costumes','direitos','instituicoes'];
+ const diagnostic=DATA.filter(c=>c.kind==='issue'&&dims.includes(c.dimension)&&[-1,1].includes(c.polarity));
+ const byDim=Object.fromEntries(dims.map(d=>[d,shuffle(diagnostic.filter(c=>c.dimension===d))]));
+ const selected=[], ids=new Set(), counts=Object.fromEntries(THEMES.map(t=>[t.id,0]));
+ const add=c=>{if(!c||ids.has(c.id))return false;selected.push(c);ids.add(c.id);counts[themeOf(c)]++;return true};
+ const rounds=Math.min(3,Math.floor(Math.min(n,DATA.length)/10));
+ for(let k=0;k<rounds;k++)for(const d of dims)add(byDim[d].shift());
+ // Keep factual learning central: at least half the first n cards, where available.
+ const facts=weightedShuffle(DATA.filter(c=>c.kind==='fact'));
+ const factTarget=Math.min(facts.length,Math.ceil(n/2));
+ while(selected.length<n && selected.filter(c=>c.kind==='fact').length<factTarget && facts.length){
+  const want=targets(n);
+  facts.sort((a,b)=>(counts[themeOf(a)]-want[themeOf(a)])-(counts[themeOf(b)]-want[themeOf(b)]));
+  add(facts.shift());
  }
- const remaining=shuffle(Object.values(buckets).flat());
- return shuffle(chosen).concat(remaining);
+ const remaining=weightedShuffle(DATA.filter(c=>!ids.has(c.id)));
+ const want=targets(n);
+ while(selected.length<Math.min(n,DATA.length)&&remaining.length){
+  remaining.sort((a,b)=>(counts[themeOf(a)]-want[themeOf(a)])-(counts[themeOf(b)]-want[themeOf(b)]));
+  add(remaining.shift());
+ }
+ return shuffle(selected).concat(shuffle(DATA.filter(c=>!ids.has(c.id))));
 }
 function extraDeckOrder(){
  const used=Object.fromEntries(THEMES.map(t=>[t.id,records.filter(r=>themeOf(DATA.find(c=>c.id===r.id))===t.id).length]));

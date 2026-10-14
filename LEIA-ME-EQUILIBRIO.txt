@@ -1,0 +1,1 @@
+Atualização do sorteio por dimensões políticas. Para rodadas de 30 cartas, seleciona 3 propostas diagnósticas por dimensão (15 propostas), além de 15 cartas factuais. A classificação continua dependente das respostas; não alterar D1 nem functions/api. Substituir somente index.html na raiz do GitHub.
