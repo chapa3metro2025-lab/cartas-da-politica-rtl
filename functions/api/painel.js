@@ -3,8 +3,8 @@ const HEADERS={'Content-Type':'application/json; charset=utf-8','Cache-Control':
 const send=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:HEADERS});
 function constantTimeEqual(a,b){const x=new TextEncoder().encode(a),y=new TextEncoder().encode(b);let diff=x.length^y.length;for(let i=0;i<Math.max(x.length,y.length);i++)diff|=(x[i]||0)^(y[i]||0);return diff===0;}
 export async function onRequestGet({request,env}){
- if(!env.DB)return send({error:'Banco de dados indisponível'},503);
- if(typeof env.PANEL_TOKEN!=='string'||env.PANEL_TOKEN.length<24)return send({error:'Painel não configurado. Defina PANEL_TOKEN com pelo menos 24 caracteres.'},503);
+ if(!env.DB)return send({error:'DIAGNOSTICO_DB: associação com banco de dados não encontrada'},503);
+ if(typeof env.PANEL_TOKEN!=='string'||env.PANEL_TOKEN.length<24)return send({error:'DIAGNOSTICO_TOKEN: segredo PANEL_TOKEN ausente ou inválido'},503);
  const auth=request.headers.get('Authorization')||'';
  if(!auth.startsWith('Bearer ')||!constantTimeEqual(auth.slice(7),env.PANEL_TOKEN))return send({error:'Acesso não autorizado'},401);
  try{
