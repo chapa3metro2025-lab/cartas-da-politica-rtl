@@ -1,0 +1,13 @@
+PAINEL ESTATÍSTICO — INSTALAÇÃO
+
+1. Envie para a raiz do repositório o novo painel.html.
+2. Envie functions/api/painel.js para a pasta functions/api. NÃO coloque painel.js na raiz.
+3. No Cloudflare Pages > projeto > Settings / Configurações > Variables and Secrets (Variáveis e segredos), adicione um segredo de produção chamado PANEL_TOKEN. Use uma chave aleatória forte de pelo menos 24 caracteres, preferencialmente 32 ou mais. NÃO a escreva no GitHub nem compartilhe por mensagens.
+4. Confirme que o binding D1 DB permanece ativo e faça um novo deploy da produção se necessário para aplicar a variável.
+5. Abra https://cartas-da-politica-rtl.pages.dev/painel.html e informe a chave no campo. Não há necessidade de SQL adicional ou alteração do banco.
+
+SEGURANÇA: o arquivo HTML é publicamente acessível, mas o endpoint /api/painel só retorna dados mediante segredo correto. Não há senha embutida no código. O segredo é mantido apenas na memória da página até ela ser fechada ou o botão Encerrar acesso ser usado. Utilize HTTPS. Para proteção adicional, recomenda-se Cloudflare Access na rota /painel.html e /api/painel, com autenticação individual e limitação de requisições.
+
+INTERPRETAÇÃO: as porcentagens das sete faixas têm como denominador apenas partidas concluídas com classificação válida. Inconclusivas e partidas antigas sem classificação aparecem em contagens separadas. Uma pessoa pode jogar várias vezes; os números não representam participantes únicos. Jogos de teste contam nas estatísticas. Dados agregados não são um levantamento científico representativo.
+
+ARQUIVOS EXISTENTES: index.html, event.js, scoring.js e banco D1 foram preservados.
