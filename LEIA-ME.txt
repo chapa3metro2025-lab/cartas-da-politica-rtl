@@ -1,29 +1,11 @@
-ATUALIZAÇÃO — PARTICIPANTES ESTIMADOS (OUTUBRO DE 2026)
+ATUALIZAÇÃO: ESTATÍSTICAS ACUMULADAS POR CARTA E NAVEGADOR
 
-Envie estes CINCO arquivos ao GitHub, mantendo os caminhos:
+Substitua na raiz: index.html, painel.html, privacidade.html.
+Substitua em functions/api/: painel.js.
+Mantenha event.js e scoring.js atuais. Não execute SQL nem altere D1/PANEL_TOKEN.
 
-NA RAIZ:
-  index.html
-  painel.html
-  privacidade.html
+O painel agrega a primeira resposta de cada carta por identificador persistente, apenas em partidas concluídas. Cartas extras também entram após a conclusão. Partidas antigas sem identificador não podem ser vinculadas a uma pessoa.
 
-NA PASTA functions/api/:
-  event.js
-  painel.js
+A classificação do painel é recalculada a partir de todas as opiniões distintas, exigindo 10 respostas válidas e 2 por dimensão (5 dimensões). O resultado individual exibido ao fim de cada partida continua baseado naquela partida; o painel apresenta o acumulado.
 
-Não envie event.js ou painel.js para a raiz.
-Não substitua scoring.js. Não execute SQL. Não altere o D1, PANEL_TOKEN nem Cloudflare.
-O endpoint cria automaticamente uma tabela auxiliar no D1, no primeiro início de partida com estatísticas autorizadas.
-
-Funcionamento:
-- Só após consentimento o navegador gera/guarda um identificador aleatório local.
-- O banco mantém todas as partidas, mas os gráficos por classificação e tema consideram a primeira partida CONCLUÍDA por navegador.
-- Partidas anteriores à atualização não possuem identificador e são tratadas como participantes distintos (não podem ser deduplicadas retroativamente).
-- O painel mostra separadamente o total de partidas e o número estimado de participantes com partida concluída.
-- IP não é usado para identificar nem bloquear pessoas.
-- Limpar dados do navegador, trocar aparelho ou navegador gera novo identificador; não há garantia de pessoa única.
-- Não há login, aplicativo novo nem novo serviço.
-
-IMPORTANTE: a implantação deve incluir os cinco arquivos no mesmo commit para evitar divergências entre jogo, API e painel.
-
-Teste após publicar: autorize estatísticas, conclua duas partidas no mesmo navegador e confira no painel se o total de partidas concluídas sobe em 2, enquanto participantes estimados sobe apenas em 1 (se não houver registros prévios daquele navegador).
+ATENÇÃO: a consulta de agregação lê as respostas concluídas; em bases muito grandes pode exigir otimização.
