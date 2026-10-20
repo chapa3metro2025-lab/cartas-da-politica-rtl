@@ -13,7 +13,12 @@ export async function onRequestPost({request,env}){
  try{
  if(d.event==='start'){
   if(!Number.isInteger(d.count)||d.count<1||d.count>200)return reply({error:'Quantidade inválida'},400);
+  // Tabela auxiliar criada automaticamente; não exige migração manual do D1.
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS participantes_partidas (partida_id TEXT PRIMARY KEY, participante_id TEXT NOT NULL, criada_em TEXT DEFAULT CURRENT_TIMESTAMP)').run();
   await env.DB.prepare('INSERT OR IGNORE INTO partidas(id,quantidade_prevista) VALUES (?,?)').bind(d.session,d.count).run();
+  if(typeof d.participant==='string'&&/^[0-9a-f]{8}-[0-9a-f-]{27,40}$/i.test(d.participant)){
+   await env.DB.prepare('INSERT OR IGNORE INTO participantes_partidas(partida_id,participante_id) VALUES (?,?)').bind(d.session,d.participant).run();
+  }
   return reply({ok:true});
  }
  if(d.event==='answer'){
